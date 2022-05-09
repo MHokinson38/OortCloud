@@ -23,3 +23,4 @@ class FileUploadModel(models.Model):
 
     def __str__(self):
         return self.filename
+
