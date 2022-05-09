@@ -1,6 +1,7 @@
-from django import forms 
+from django import forms
 from .models import FileUploadModel
 from django.utils.translation import gettext_lazy as _
+
 
 ##################################
 # File Uploads 
@@ -15,4 +16,3 @@ class UploadFileForm(forms.ModelForm):
         labels = {
             'filename': _('Remote File Name'),
         }
-    

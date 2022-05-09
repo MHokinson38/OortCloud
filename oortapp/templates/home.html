@@ -1,27 +1,35 @@
 {% extends 'base.html' %}
 {% block title %}
-    Oort Cloud
+    {{ page_title }}
 {% endblock %}
 
 {% block content %}
     <div class="row">
         <div class="col">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Files</h4>
+                <div class="card-header text-center">
+                    <h4 class="card-title">{{ page_title }}</h4>
                 </div>
                 <div class="card-body no-padding">
                     <table id="files-table" class="display cell-border">
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Owner</th>
                                 <th>Upload Date</th>
-                                <th>Size</th>
+                                <th>Download</th>
+                                <th>Delete</th>
                             </tr>
                         </thead>
                         <tbody>
                         {% for file in files %}
-
+                            <tr>
+                                <td>{{ file.name }}</td>
+                                <td>{{ file.owner }}</td>
+                                <td>{{ file.upload_date }}</td>
+                                <td><a href="{% url 'download' file.id %}">download</a></td>
+                                <td><a href="{% url 'delete' file.id %}">delete</a></td>
+                            </tr>
                         {% endfor %}
                         </tbody>
                     </table>
