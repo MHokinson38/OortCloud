@@ -1,5 +1,6 @@
 body {
     font-family: 'Courier New', monospace;
+    overflow: hidden;
 }
 
 a {
@@ -11,4 +12,17 @@ a:hover {
     font-weight: bold;
     font-size: 20px;
     color: red;
+}
+
+.card-header {
+    border: none;
+    background-color: transparent;
+}
+
+.no-padding {
+    padding: 0 10px;
+}
+
+.card {
+    border: none;
 }
