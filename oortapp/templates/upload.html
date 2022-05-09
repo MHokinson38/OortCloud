@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+
+<html>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <!-- This is really bad andy please make better uwu-->
+        {{ form.as_p }}
+        <button type="submit"> Upload </button>
+
+    </form>
+
+    {%if success%}
+        <p> File uploaded! </p>
+    {% endif %}
+</html>

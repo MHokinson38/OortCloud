@@ -3,8 +3,9 @@ from django.shortcuts import render
 import logging
 
 # File Uploads 
-from django.http import HttpResponseRedirect 
-from .forms import UploadFileForm 
+from django.http import HttpResponseRedirect
+from .forms import UploadFileForm
+
 
 ####################
 # Landing Page 
@@ -36,4 +37,3 @@ def upload_file(request):
          'success': success
         }
     )
-

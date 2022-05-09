@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}
+    Oort Cloud
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Files</h4>
+                </div>
+                <div class="card-body no-padding">
+                    <table id="files-table" class="display cell-border">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Upload Date</th>
+                                <th>Size</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for file in files %}
+
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+    $("#files-table").DataTable({
+        "paging": false,
+        "ordering": false,
+        "info": false,
+        "searching": true,
+        "destroy": true,
+        "autoWidth": false
+    });
+</script>
+{% endblock %}
