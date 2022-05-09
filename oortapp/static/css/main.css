@@ -1,0 +1,14 @@
+body {
+    font-family: 'Courier New', monospace;
+}
+
+a {
+    transition: all ease 0.1s;
+    color: black;
+}
+
+a:hover {
+    font-weight: bold;
+    font-size: 20px;
+    color: red;
+}
