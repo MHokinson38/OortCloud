@@ -19,3 +19,6 @@ class FileUploadModel(models.Model):
     owner = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=150, null=False, default='My File')
     in_trash = models.BooleanField(default=False, null=False)
+
+    def __str__(self):
+        return self.name
