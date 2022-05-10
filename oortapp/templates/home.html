@@ -9,6 +9,7 @@
             <div class="card">
                 <div class="card-header text-center">
                     <h4 class="card-title">{{ page_title }}</h4>
+                    <a href="{% url 'create_folder' %}">new folder</a>
                 </div>
                 <div class="card-body no-padding">
                     <table id="files-table" class="display cell-border">
@@ -27,6 +28,22 @@
                             </tr>
                         </thead>
                         <tbody>
+                        {% for folder in folders %}
+                            <!-- <tr>
+                                <td>{{ file.filename }}</td>
+                                <td>{{ file.size|sizify }}</td>
+                                <td>{{ file.owner }}  {% if file.private %}<i class="fa-solid fa-lock"></i>{% endif %}</td>
+                                <td>{{ file.upload_date }}</td>
+                                <td>
+                                    {% if file.in_trash %}
+                                        <a href="{% url 'restore' file.id %}">restore</a>
+                                    {% else %}
+                                        <a href="{% url 'download' file.id %}">download</a>
+                                    {% endif %}
+                                </td>
+                                <td><a href="{% url 'delete' file.id %}">delete</a></td>
+                            </tr> -->
+                        {% endfor %}
                         {% for file in files %}
                             <tr>
                                 <td>{{ file.filename }}</td>

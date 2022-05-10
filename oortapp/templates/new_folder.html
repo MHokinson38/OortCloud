@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}
+    Upload
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4 class="card-title">New Folder</h4>
+            </div>
+            <div class="card-body no-padding text-center">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <br>
+                    <br>
+                    <input class="btn btn-danger" type="submit" value="Upload">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

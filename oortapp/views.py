@@ -4,7 +4,7 @@ import logging
 
 # File Uploads 
 from django.http import HttpResponseRedirect, HttpResponse
-from .forms import UploadFileForm
+from .forms import UploadFileForm, FileGroupForm
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -69,14 +69,11 @@ def trash(request):
 ####################
 @login_required(login_url='login')
 def upload_file(request):
-    success = False
     if request.method == 'POST':
         logging.debug("POST Request in the file upload")
 
         form = UploadFileForm(request.POST, request.FILES)
-        success = form.is_valid()
-        
-        if success:
+        if form.is_valid():
             logging.debug("Success in uploading the file")
             
             # add owner to form data
@@ -91,10 +88,9 @@ def upload_file(request):
         form = UploadFileForm()
     
     return render(request, 'upload.html', 
-        {
-            'form': form
-        }
-    )
+    {
+        'form': form
+    })
 
 
 ####################
@@ -193,3 +189,26 @@ def restore_file(request, file_id):
         # file not found error message
         messages.error(request, 'File not found!')
         return redirect('home')
+
+@login_required(login_url='login')
+def create_folder(request):
+    if request.method == 'POST':
+        logging.debug("POST Request in the folder creation form")
+
+        form = FileGroupForm(request.POST, request.FILES)
+        if form.is_valid():
+            logging.debug("Success in creating the folder")
+            
+            # add owner to form data
+            form_instance = form.save(commit=False)
+            form_instance.owner = request.user
+            form_instance.save() # File is saved
+
+            messages.success(request, 'Folder created!')
+            return HttpResponseRedirect('home')
+    else:
+        form = FileGroupForm()
+    
+    return render(request, "new_folder.html", {
+        'form': form
+    })
