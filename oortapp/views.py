@@ -6,6 +6,9 @@ import logging
 from django.http import HttpResponseRedirect, HttpResponse
 from .forms import UploadFileForm, FileGroupForm
 
+# Downloads 
+from zipfile import ZipFile
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
@@ -131,29 +134,42 @@ def upload_file(request):
 # [TODO: Move this elsewhere]
 ####################
 # Checks file permissions 
-def has_permission(request, file):
+def has_permission(request, file, delete_op=False):
+    if delete_op and file.owner == 3:
+        return False
     return file.owner == request.user or file.owner == None or file.private == False
 
 
 ####################
 # Download File 
 ####################
+# TODO: Move this to another file 
+# Downloads a single file for the user, returns (ret_code, http response)
+# Return codes: 0: Success, return given http response, 1: error, redirect home
+def download_single_file(file):
+    file_path = os.path.join(settings.MEDIA_ROOT, file.upload.name)
+    if os.path.exists(file_path):
+        # download file
+        with open(file_path, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type='application/octet-stream')
+            # Writing display name over uplaod name, should be clearer to user what they download
+            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(file.filename)
+            return (0, response)
+    else:
+        # file is gone from storage but not database
+        file.delete()
+        return (1, null) # redirect home
+
 @login_required(login_url='login')
 def download_file(request, file_id):
     try:
         file = FileUploadModel.objects.get(id=file_id)
         
         if has_permission(request, file):
-            file_path = os.path.join(settings.MEDIA_ROOT, file.upload.name)
-            if os.path.exists(file_path):
-                # download file
-                with open(file_path, 'rb') as fh:
-                    response = HttpResponse(fh.read(), content_type='application/octet-stream')
-                    response['Content-Disposition'] = 'inline; filename=' + os.path.basename(file_path)
-                    return response
+            ret_code, response = download_single_file(file)
+            if ret_code == 0:
+                return response
             else:
-                # file is gone from storage but not database
-                file.delete()
                 messages.error(request, 'File not found!')
                 return redirect('home')
         else:
@@ -167,8 +183,41 @@ def download_file(request, file_id):
         return redirect('home')
 
 @login_required(login_url='login')
-def download_folder(request, file_id):
-    pass
+def download_folder(request, folder_id):
+    logging.debug(f"downloading folder: {folder_id}")
+    try:
+        folder = FileGroup.objects.get(id=folder_id)
+        files = FileUploadModel.objects.filter(file_group=folder)
+
+        # Veify permissions exist on all files 
+        permission_check = all(map(lambda file : has_permission(request, file), files))
+
+        if not permission_check:
+            logging.debug(f"User does not have permission for entire folder")
+            # permissions error message
+            messages.warning(request, 'You do not have permission to download this entire Folder!')
+            return redirect('home')
+        
+        zfile_path = 'oort_download.zip'    # Write this somewhere else?
+        with ZipFile(zfile_path, 'w') as z_file:
+            for f in files:
+                file_path = os.path.join(settings.MEDIA_ROOT, f.upload.name)
+                
+                logging.debug(f"Writing file: {file_path} into the zip file")
+                # Writing files to zip archive, zip archive is going to have filenames rather than 
+                # upload names to avoid confusion at download
+                z_file.write(file_path, arcname=f.filename)     
+
+        with open(zfile_path, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type='application/octet-stream')
+            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(zfile_path)
+            return response
+
+
+    except FileGroup.DoesNotExist:
+        # file not found error message
+        messages.error(request, 'Folder not found!')
+        return redirect('home')
 
 
 ####################
@@ -203,7 +252,7 @@ def delete_file(request, file_id):
     try:
         file = FileUploadModel.objects.get(id=file_id)
         
-        if has_permission(request, file):
+        if has_permission(request, file, delete_op=True):
             ret_code = remove_file(file)
             if ret_code == 0:
                 messages.success(request, "File moved to trash!")
@@ -232,7 +281,7 @@ def delete_folder(request, folder_id):
         files = FileUploadModel.objects.filter(file_group=folder)
 
         # Veify permissions exist on all files 
-        permission_check = all(map(lambda file : has_permission(request, file), files))
+        permission_check = all(map(lambda file : has_permission(request, file, delete_op=True), files))
 
         if not permission_check:
             logging.debug(f"User does not have permission for entire folder")
