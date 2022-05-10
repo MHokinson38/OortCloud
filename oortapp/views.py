@@ -101,7 +101,7 @@ def download_file(request, file_id):
     try:
         file = FileUploadModel.objects.get(id=file_id)
         
-        if file.owner == request.user or file.owner == None:
+        if file.owner == request.user or file.owner == None or file.private == False:
             file_path = os.path.join(settings.MEDIA_ROOT, file.upload.name)
             if os.path.exists(file_path):
                 # download file
@@ -133,7 +133,7 @@ def delete_file(request, file_id):
     try:
         file = FileUploadModel.objects.get(id=file_id)
         
-        if file.owner == request.user or file.owner == None:
+        if file.owner == request.user or file.owner == None or file.private == False:
             file_path = os.path.join(settings.MEDIA_ROOT, file.upload.name)
             if os.path.exists(file_path):
                 # delete file
@@ -174,7 +174,7 @@ def restore_file(request, file_id):
     try:
         file = FileUploadModel.objects.get(id=file_id)
         
-        if file.owner == request.user or file.owner == None:
+        if file.owner == request.user or file.owner == None or file.private == False:
             # move file to trash
             file.in_trash = False
             file.save()

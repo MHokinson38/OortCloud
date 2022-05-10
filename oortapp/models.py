@@ -26,11 +26,15 @@ class FileUploadModel(models.Model):
     # Look into storage argument, might be needed for database/displaying uploaded files 
     upload = models.FileField(upload_to=user_directory_path)
 
-    filename = models.CharField(max_length=100)                 # Display name (not name given to path generator)
+    # Display name (not name given to path generator)
+    filename = models.CharField(max_length=100)     
+    # Whether files are viewable by other users             
+    private = models.BooleanField(default=False, null=False)
+    
+    # Auto-set fields 
     upload_date = models.DateTimeField(null=True, default=timezone.now)
     owner = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     in_trash = models.BooleanField(default=False, null=False)
-    private = models.BooleanField(default=False, null=False)
     size = models.IntegerField(null=False, default=0)
     file_group = models.ManyToManyField(FileGroup)
 
