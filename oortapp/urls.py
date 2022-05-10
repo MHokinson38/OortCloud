@@ -12,5 +12,6 @@ urlpatterns = [
     path("download/<int:file_id>", views.download_file, name="download"),
 
     path('login', views.login_user, name='login'),
+    path('sign_up', views.create_user, name='sign_up'),
     path('logout', views.logout_user, name='logout')
 ]

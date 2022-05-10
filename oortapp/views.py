@@ -7,6 +7,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from .forms import UploadFileForm, FileGroupForm
 
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from .decorators import unauthenticated_user
 from django.contrib import messages
@@ -28,6 +29,24 @@ def login_user(request):
             messages.info(request, 'Username or password is incorrect')
     context = {}
     return render(request, 'login.html', context)
+
+@unauthenticated_user
+def create_user(request):
+    if request.method == 'POST':
+        f = UserCreationForm(request.POST)
+        if f.is_valid():
+            f.save()
+
+            messages.success(request, 'Account created successfully')
+            return redirect('home')
+        else:
+            for msg_key in f.error_messages:
+                messages.info(request, f.error_messages[msg_key])
+
+    else:
+        f = UserCreationForm()
+
+    return render(request, 'sign_up.html', {'form': f})
 
 
 @login_required(login_url='login')

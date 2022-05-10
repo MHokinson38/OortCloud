@@ -29,21 +29,31 @@
 <div class="row">
     <div class="col text-center">
         <div class="card-header">
-            <h4 class="card-title">Login</h4>
+            <h4 class="card-title">Sign Up</h4>
         </div>
         <div class="card-body">
             <form method="POST" action="">
                 {% csrf_token %}
-                <input type="text" name="username" placeholder="Username...">
+                <label for="id_username">Password:</label>
+                <input type="text" name="username" placeholder="Username..." required>
                 <br>
                 <br>
-                <input type="password" name="password" placeholder="Password...">
+                <label for="id_password1">Password:</label>
+                <input type="password" name="password1" placeholder="Password..." required>
+                <span class="helptext">
+                    <ul>
+                        <li>Your password can’t be too similar to your other personal information.</li>
+                        <li>Your password must contain at least 8 characters.</li>
+                        <li>Your password can’t be a commonly used password.</li>
+                        <li>Your password can’t be entirely numeric.</li>
+                    </ul>
+                </span>
                 <br>
                 <br>
-                <input class="btn btn-danger" type="submit" value="Login">
-            </form>
-            <br>
-            <form method="GET" action="{% url 'sign_up' %}">
+                <label for="id_password2">Verify Password:</label>
+                <input type="password" name="password2" placeholder="Verify password..." required>
+                <br>
+                <br>
                 <input class="btn btn-danger" type="submit" value="Sign Up">
             </form>
         </div>
