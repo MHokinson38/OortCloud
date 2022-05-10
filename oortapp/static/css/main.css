@@ -1,6 +1,5 @@
 body {
     font-family: 'Courier New', monospace;
-    overflow: hidden;
 }
 
 a {
@@ -25,4 +24,23 @@ a:hover {
 
 .card {
     border: none;
+}
+
+.selected{
+    transition: all ease 0.5s;
+    background-color: rgba(255, 0, 0, 0.5) !important;
+}
+
+.folder {
+    font-weight: bold;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
+.table-icon {
+    float: right
 }

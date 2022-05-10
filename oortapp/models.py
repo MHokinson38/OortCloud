@@ -36,7 +36,7 @@ class FileUploadModel(models.Model):
     owner = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     in_trash = models.BooleanField(default=False, null=False)
     size = models.IntegerField(null=False, default=0)
-    file_group = models.ManyToManyField(FileGroup)
+    file_group = models.ForeignKey(FileGroup, null=False, default=3, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.filename

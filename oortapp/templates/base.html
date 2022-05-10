@@ -23,8 +23,8 @@
 
 </head>
 
-<body>
-<div class="row">
+<body class="d-flex flex-column min-vh-100">
+<div class="row g-0">
     <div class="col text-center">
         <img src="{% static 'img/logo.png' %}" style="width: 200px" alt="logo">
         <br>
@@ -36,7 +36,7 @@
 </div>
 {% block content %}{% endblock %}
 
-<footer class="footer">
+<footer class="mt-auto">
     <div class="copyright" id="copyright" style="float:right; padding-right: 10px;">&copy;
         <script>document.getElementById('copyright').appendChild(document.createTextNode(new Date().getFullYear()))
         </script>

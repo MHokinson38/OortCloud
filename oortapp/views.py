@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import FileUploadModel
+from .models import FileUploadModel, FileGroup
 import logging
 
 # File Uploads 
@@ -57,6 +57,7 @@ def logout_user(request):
 
 ####################
 # Landing Page 
+# [TODO: Move file fetching to another file]
 ####################
 def fetchFiles(user, trash=False):
     public_files = FileUploadModel.objects.filter(in_trash=trash, private=False)
@@ -64,12 +65,20 @@ def fetchFiles(user, trash=False):
 
     return public_files | private_files
 
+def fetchFolders(user, trash=False):
+    public_folders = FileGroup.objects.filter(in_trash=trash, private=False)
+    private_folders = FileGroup.objects.filter(in_trash=trash, private=True, owner=(user))
+
+    return public_folders | private_folders
+
 @login_required(login_url='login')
 def home(request):
     files = fetchFiles(request.user)
+    folders = fetchFolders(request.user)
 
     return render(request, "home.html", {
         'files': files,
+        'folders': folders,
         'page_title': "Home"
     })
 
@@ -80,9 +89,11 @@ def home(request):
 @login_required(login_url='login')
 def trash(request):
     files = fetchFiles(request.user, trash=True)
+    folders = fetchFolders(request.user, trash=True)
 
     return render(request, "home.html", {
         'files': files,
+        'folders': folders,
         'page_title': "Trash"
     })
 
@@ -115,6 +126,14 @@ def upload_file(request):
         'form': form
     })
 
+####################
+# File backend 
+# [TODO: Move this elsewhere]
+####################
+# Checks file permissions 
+def has_permission(request, file):
+    return file.owner == request.user or file.owner == None or file.private == False
+
 
 ####################
 # Download File 
@@ -124,7 +143,7 @@ def download_file(request, file_id):
     try:
         file = FileUploadModel.objects.get(id=file_id)
         
-        if file.owner == request.user or file.owner == None or file.private == False:
+        if has_permission(request, file):
             file_path = os.path.join(settings.MEDIA_ROOT, file.upload.name)
             if os.path.exists(file_path):
                 # download file
@@ -147,36 +166,53 @@ def download_file(request, file_id):
         messages.error(request, 'File not found!')
         return redirect('home')
 
+@login_required(login_url='login')
+def download_folder(request, file_id):
+    pass
+
 
 ####################
-# Delete File 
+# Delete  
 ####################
+# deletes file from table and storage 
+# does not perform permission checks at this point, assumes permissions from user 
+# Return codes: 0: redirect home, success. 1: redirect trash, success. 2: redirect home, failure
+def remove_file(file):
+    file_path = os.path.join(settings.MEDIA_ROOT, file.upload.name)
+    if os.path.exists(file_path):
+        # delete file
+        if file.in_trash:
+            # fully delete file
+            os.remove(file_path)
+            file.delete()
+            return 1  
+        else:
+            # move file to trash
+            file.in_trash = True
+            file.save()
+            return 0 
+
+    else:
+        # file is gone from storage but not database
+        file.delete()
+        return 2 
+
 @login_required(login_url='login')
 def delete_file(request, file_id):
+    logging.debug(f"Deleting file: {file_id}")
     try:
         file = FileUploadModel.objects.get(id=file_id)
         
-        if file.owner == request.user or file.owner == None or file.private == False:
-            file_path = os.path.join(settings.MEDIA_ROOT, file.upload.name)
-            if os.path.exists(file_path):
-                # delete file
-                if file.in_trash:
-                    # fully delete file
-                    os.remove(file_path)
-                    file.delete()
-                    messages.success(request, 'File permanently deleted!')
-                    return redirect('trash')
-                else:
-                    # move file to trash
-                    file.in_trash = True
-                    file.save()
-                    messages.success(request, 'File moved to trash!')
-                    return redirect('home')
-
-            else:
-                # file is gone from storage but not database
-                file.delete()
-                messages.error(request, 'File not found!')
+        if has_permission(request, file):
+            ret_code = remove_file(file)
+            if ret_code == 0:
+                messages.success(request, "File moved to trash!")
+                return redirect('home')
+            if ret_code == 1:
+                messages.success(request, "File permanently deleted!")
+                return redirect('trash')
+            if ret_code == 2:
+                messages.warning(request, "File not found on disk!")    # not technically an error, operation can continue
                 return redirect('home')
         else:
             # permissions error message
@@ -186,6 +222,39 @@ def delete_file(request, file_id):
     except FileUploadModel.DoesNotExist:
         # file not found error message
         messages.error(request, 'File not found!')
+        return redirect('home')
+
+@login_required(login_url='login')
+def delete_folder(request, folder_id):
+    logging.debug(f"Deleting folder: {folder_id}")
+    try:
+        folder = FileGroup.objects.get(id=folder_id)
+        files = FileUploadModel.objects.filter(file_group=folder)
+
+        # Veify permissions exist on all files 
+        permission_check = all(map(lambda file : has_permission(request, file), files))
+
+        if not permission_check:
+            logging.debug(f"User does not have permission for entire folder")
+            # permissions error message
+            messages.warning(request, 'You do not have permission to delete this Folder!')
+            return redirect('home')
+        
+        for f in files:
+            if remove_file(f) == 2: # error occured 
+                messages.warning(request, f"File {f.filename} was missing from disk. Operation finished anyway.")
+
+        if folder.in_trash:
+            folder.delete()
+            return redirect('trash')
+        else:
+            folder.in_trash = True  # move folder to trash 
+            folder.save()
+            return redirect('home')
+    
+    except FileGroup.DoesNotExist:
+        # file not found error message
+        messages.error(request, 'Folder not found!')
         return redirect('home')
     
 
@@ -202,17 +271,20 @@ def restore_file(request, file_id):
             file.in_trash = False
             file.save()
             messages.success(request, 'File moved out of trash!')
-            return redirect('home')
+            return redirect('trash')
         else:
             # permissions error message
             messages.warning(request, 'You do not have permission to restore this file!')
-            return redirect('home')
+            return redirect('trash')
     
     except FileUploadModel.DoesNotExist:
         # file not found error message
         messages.error(request, 'File not found!')
-        return redirect('home')
+        return redirect('trash')
 
+####################
+# Folders  
+####################
 @login_required(login_url='login')
 def create_folder(request):
     if request.method == 'POST':
@@ -235,3 +307,24 @@ def create_folder(request):
     return render(request, "new_folder.html", {
         'form': form
     })
+
+@login_required(login_url='login')
+def move_files(request):
+    if request.method != 'POST':
+        return redirect('home')
+    
+    folder_id = request.POST['folder_id']
+    file_ids = request.POST.getlist('file_ids[]')
+
+    logging.debug(f"{folder_id}, {file_ids}")
+
+    folder = FileGroup.objects.get(id=folder_id)
+
+    for fid in file_ids:
+        file = FileUploadModel.objects.get(id=fid)
+        file.file_group = folder
+
+        file.save()
+
+    messages.success(request, 'Files moved successfully!')
+    return HttpResponse(200)
