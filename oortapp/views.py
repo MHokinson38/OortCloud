@@ -39,11 +39,16 @@ def logout_user(request):
 ####################
 # Landing Page 
 ####################
+def fetchFiles(user, trash=False):
+    public_files = FileUploadModel.objects.filter(in_trash=trash, private=False)
+    private_files = FileUploadModel.objects.filter(in_trash=trash, private=True, owner=(user))
+
+    return public_files | private_files
+
 @login_required(login_url='login')
 def home(request):
-    public_files = FileUploadModel.objects.filter(in_trash=False, private=False)
-    private_files = FileUploadModel.objects.filter(in_trash=False, private=True, owner=(request.user))
-    files = public_files | private_files
+    files = fetchFiles(request.user)
+
     return render(request, "home.html", {
         'files': files,
         'page_title': "Home"
@@ -55,9 +60,8 @@ def home(request):
 ####################
 @login_required(login_url='login')
 def trash(request):
-    public_files = FileUploadModel.objects.filter(in_trash=True, private=False)
-    private_files = FileUploadModel.objects.filter(in_trash=True, private=True, owner=(request.user))
-    files = public_files | private_files
+    files = fetchFiles(request.user, trash=True)
+
     return render(request, "home.html", {
         'files': files,
         'page_title': "Trash"
