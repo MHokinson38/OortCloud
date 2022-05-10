@@ -8,11 +8,11 @@ from django.utils import timezone
 ################################
 # Generate unique file paths for each user in internal file system 
 def user_directory_path(instance, filename):
-    return f"user_{0}/{filename}"               # Add user filenaming later 
+    return f"user_{instance.owner}/{filename}"               # Add user filenaming later 
 
 
 class FileGroup(models.Model):
-    groupname = models.CharField(max_length=100)                 # Display name (not name given to path generator)
+    groupname = models.CharField(max_length=100)        # Display name 
     creation_date = models.DateTimeField(null=True, default=timezone.now)
     owner = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     in_trash = models.BooleanField(default=False, null=False)
