@@ -1,4 +1,5 @@
 {% load static %}
+{% load my_filters %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -29,7 +30,7 @@
         <br>
         <a href="{% url 'home' %}">home</a>
         <a href="{% url 'trash' %}">trash</a>
-        <a href="{% url 'home' %}">upload</a>
+        <a href="{% url 'upload' %}">upload</a>
         <a href="{% url 'logout' %}">logout</a>
     </div>
 </div>

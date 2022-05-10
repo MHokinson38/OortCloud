@@ -20,6 +20,8 @@ class FileUploadModel(models.Model):
     upload_date = models.DateTimeField(null=True, default=timezone.now)
     owner = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     in_trash = models.BooleanField(default=False, null=False)
+    private = models.BooleanField(default=False, null=False)
+    size = models.IntegerField(null=False, default=0)
 
     def __str__(self):
         return self.filename

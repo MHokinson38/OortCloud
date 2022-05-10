@@ -2,7 +2,7 @@
 {% block title %}
     {{ page_title }}
 {% endblock %}
-
+{% load my_filters %}
 {% block content %}
     <div class="row">
         <div class="col">
@@ -15,19 +15,31 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Size</th>
                                 <th>Owner</th>
                                 <th>Upload Date</th>
-                                <th>Download</th>
+                                {% if page_title == "Trash" %}
+                                    <th>Restore</th>
+                                {% else %}
+                                    <th>Download</th>
+                                {% endif %}
                                 <th>Delete</th>
                             </tr>
                         </thead>
                         <tbody>
                         {% for file in files %}
                             <tr>
-                                <td>{{ file.name }}</td>
-                                <td>{{ file.owner }}</td>
+                                <td>{{ file.filename }}</td>
+                                <td>{{ file.size|sizify }}</td>
+                                <td>{{ file.owner }}  {% if file.private %}<i class="fa-solid fa-lock"></i>{% endif %}</td>
                                 <td>{{ file.upload_date }}</td>
-                                <td><a href="{% url 'download' file.id %}">download</a></td>
+                                <td>
+                                    {% if file.in_trash %}
+                                        <a href="{% url 'restore' file.id %}">restore</a>
+                                    {% else %}
+                                        <a href="{% url 'download' file.id %}">download</a>
+                                    {% endif %}
+                                </td>
                                 <td><a href="{% url 'delete' file.id %}">delete</a></td>
                             </tr>
                         {% endfor %}
@@ -35,6 +47,21 @@
                     </table>
                 </div>
             </div>
+
+            <div class="mt-4">
+                {% for message in messages %}
+                {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                    <div class="alert alert-danger">
+                {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+                    <div class="alert alert-warning">
+                {% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                        <div class="alert alert-success">
+                {% endif %}
+                        <strong>{{ message|escape }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+
         </div>
     </div>
 {% endblock %}
@@ -43,7 +70,7 @@
 <script>
     $("#files-table").DataTable({
         "paging": false,
-        "ordering": false,
+        "ordering": true,
         "info": false,
         "searching": true,
         "destroy": true,

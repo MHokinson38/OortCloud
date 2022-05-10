@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy as _
 class UploadFileForm(forms.ModelForm):
     class Meta: 
         model = FileUploadModel
-        fields = ('filename', 'upload',)
+        fields = ('filename', 'upload', 'private')
         exclude = ['uploaded_at']        # this should be auto generated 
 
         labels = {
