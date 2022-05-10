@@ -11,15 +11,29 @@
                 <h4 class="card-title">Upload</h4>
             </div>
             <div class="card-body no-padding text-center">
-                <form method="post" enctype="multipart/form-data">
+                <form action="" id="fileUploadForm" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {{ form.as_p }}
                     <br>
                     <br>
-                    <input class="btn btn-danger" type="submit" value="Upload">
+                    <input id="uploadSubmitButton" class="btn btn-danger" type="submit" value="Upload">
                 </form>
+                <div id="progressBox" class="not-visible">Insert progress bar here</div>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
+
+# Manual ajax request check (https://stackoverflow.com/questions/70419441/attributeerror-wsgirequest-object-has-no-attribute-is-ajax)
+def is_ajax(request):
+    return request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'
+
+@login_required(login_url='login')
+def upload_file(request):
+    form = UploadFileForm(request.POST, request.FILES)
+
+    if is_ajax(request):
+        logging.debug("POST Request was ajax")
+    
+        

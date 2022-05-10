@@ -71,8 +71,17 @@ def trash(request):
 ####################
 # File Upload Page 
 ####################
+# Manual ajax request check (https://stackoverflow.com/questions/70419441/attributeerror-wsgirequest-object-has-no-attribute-is-ajax)
+def is_ajax(request):
+    return request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'
+
 @login_required(login_url='login')
 def upload_file(request):
+    form = UploadFileForm(request.POST, request.FILES)
+
+    if is_ajax(request):
+        logging.debug("POST Request was ajax")
+        
     if request.method == 'POST':
         logging.debug("POST Request in the file upload")
 

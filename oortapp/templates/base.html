@@ -20,7 +20,8 @@
     <!-- custom css -->
     <link href="{% static 'css/main.css' %}" rel="stylesheet"/>
 
-
+    <!--  js-->
+    <script src="{% static 'js/main.js' %}" defer></script>
 </head>
 
 <body>
@@ -56,8 +57,7 @@
             crossorigin="anonymous"></script>
     <!-- datatables -->
     <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
-    <!--  js -->
-    <script src="{% static 'js/main.js' %}"></script>
+
     {% block page_scripts %}{% endblock %}
 </footer>
 </body>
