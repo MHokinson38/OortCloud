@@ -92,7 +92,7 @@ def home(request):
 @login_required(login_url='login')
 def trash(request):
     files = fetchFiles(request.user, trash=True)
-    folders = fetchFolders(request.user, trash=True)
+    folders = FileGroup.objects.filter(id=3) # root folder
 
     return render(request, "home.html", {
         'files': files,
@@ -279,27 +279,27 @@ def delete_folder(request, folder_id):
     try:
         folder = FileGroup.objects.get(id=folder_id)
         files = FileUploadModel.objects.filter(file_group=folder)
-
+        root_folder = FileGroup.objects.get(id=3)
         # Veify permissions exist on all files 
         permission_check = all(map(lambda file : has_permission(request, file, delete_op=True), files))
 
         if not permission_check:
             logging.debug(f"User does not have permission for entire folder")
             # permissions error message
-            messages.warning(request, 'You do not have permission to delete this Folder!')
+            messages.warning(request, 'You do not have permission to delete this Folder because someone has private files in it!')
             return redirect('home')
         
         for f in files:
+            # move files to root folder
+            f.file_group = root_folder
+            f.save()
             if remove_file(f) == 2: # error occured 
                 messages.warning(request, f"File {f.filename} was missing from disk. Operation finished anyway.")
 
-        if folder.in_trash:
-            folder.delete()
-            return redirect('trash')
-        else:
-            folder.in_trash = True  # move folder to trash 
-            folder.save()
-            return redirect('home')
+        folder.delete()
+        return redirect('home')
+        messages.success(request, 'Successfully deleted folder and moved files to root folder!')
+        
     
     except FileGroup.DoesNotExist:
         # file not found error message
