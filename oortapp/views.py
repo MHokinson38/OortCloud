@@ -68,7 +68,7 @@ def fetchFiles(user, trash=False):
 
     return public_files | private_files
 
-def fetchFolders(user, trash=False):
+def fetchFolders(user, trash=False, exclude=None):
     public_folders = FileGroup.objects.filter(in_trash=trash, private=False)
     private_folders = FileGroup.objects.filter(in_trash=trash, private=True, owner=(user))
 
@@ -82,6 +82,7 @@ def home(request):
     return render(request, "home.html", {
         'files': files,
         'folders': folders,
+        'folders_dropdown': folders,
         'page_title': "Home"
     })
 
@@ -92,12 +93,38 @@ def home(request):
 @login_required(login_url='login')
 def trash(request):
     files = fetchFiles(request.user, trash=True)
-    folders = FileGroup.objects.filter(id=3) # root folder
+    
+    return render(request, "home.html", {
+        'files': files,
+        # 'folders': folders,
+        'page_title': "Trash"
+    })
+
+####################
+# Open Folder Page
+####################
+@login_required(login_url='login')
+def open_folder(request, folder_id):
+    
+    try:
+        folder = FileGroup.objects.get(id=folder_id)
+        public_files = FileUploadModel.objects.filter(in_trash=False, private=False, file_group=folder)
+        private_files = FileUploadModel.objects.filter(in_trash=False, private=True, owner=(request.user), file_group=folder)
+
+        files = public_files | private_files
+        
+        public_folders = FileGroup.objects.filter(in_trash=False, private=False).exclude(id=folder_id)
+        private_folders = FileGroup.objects.filter(in_trash=False, private=True, owner=(request.user)).exclude(id=folder_id)
+
+        folders = public_folders | private_folders
+
+    except FileGroup.DoesNotExist:
+        return redirect('home')
 
     return render(request, "home.html", {
         'files': files,
-        'folders': folders,
-        'page_title': "Trash"
+        'folders_dropdown': folders,
+        'page_title': folder.groupname
     })
 
 
@@ -279,7 +306,7 @@ def delete_folder(request, folder_id):
     try:
         folder = FileGroup.objects.get(id=folder_id)
         files = FileUploadModel.objects.filter(file_group=folder)
-        root_folder = FileGroup.objects.get(id=3)
+
         # Veify permissions exist on all files 
         permission_check = all(map(lambda file : has_permission(request, file, delete_op=True), files))
 
@@ -291,14 +318,14 @@ def delete_folder(request, folder_id):
         
         for f in files:
             # move files to root folder
-            f.file_group = root_folder
+            f.file_group = None
             f.save()
             if remove_file(f) == 2: # error occured 
                 messages.warning(request, f"File {f.filename} was missing from disk. Operation finished anyway.")
 
         folder.delete()
+        messages.success(request, 'Successfully deleted folder and moved files to trash!')
         return redirect('home')
-        messages.success(request, 'Successfully deleted folder and moved files to root folder!')
         
     
     except FileGroup.DoesNotExist:
@@ -366,8 +393,10 @@ def move_files(request):
     file_ids = request.POST.getlist('file_ids[]')
 
     logging.debug(f"{folder_id}, {file_ids}")
-
-    folder = FileGroup.objects.get(id=folder_id)
+    if folder_id == '-1':
+        folder = None
+    else:
+        folder = FileGroup.objects.get(id=folder_id)
 
     for fid in file_ids:
         file = FileUploadModel.objects.get(id=fid)

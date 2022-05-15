@@ -24,13 +24,12 @@
                                     <th>Download</th>
                                 {% endif %}
                                 <th>Delete</th>
-                                <th>another</th>
                             </tr>
                         </thead>
                         <tbody>
                         {% for folder in folders %}
                             <tr class="folder-row">
-                                <td><a href="#" class="folder">{{ folder.groupname }}</a><i class="fa-solid fa-folder table-icon"></i></td>
+                                <td><a href="{% url 'open_folder' folder.id %}" class="folder">{{ folder.groupname }}</a><i class="fa-solid fa-folder table-icon"></i></td>
                                 <td>-</td>
                                 <td>{{ folder.owner }}  {% if folder.private %}<i class="fa-solid fa-lock table-icon"></i>{% endif %}</td>
                                 <td>{{ folder.creation_date }}</td>
@@ -41,32 +40,28 @@
                                         <a href="{% url 'download_folder' folder.id %}">download</a>
                                     {% endif %}
                                 </td>
-                                <td>{% if folder.id != 3 %}<a href="{% url 'delete_folder' folder.id %}">delete</a>{% endif %}</td>
-                                <td>
-
-                                            <table style="width: 100%" class="display cell-border">
-                                                {% for file in files %}
-                                                {% if file.file_group == folder %}
-                                                    <tr>
-                                                        <input type="hidden" value="{{ file.id }}">
-                                                        <td>{{ file.filename }}<i class="fa-solid fa-file table-icon"></i></td>
-                                                        <td>{{ file.size|sizify }}</td>
-                                                         <td>{{ file.owner }}  {% if file.private %}<i class="fa-solid fa-lock table-icon"></i>{% endif %}</td>
-                                                        <td>{{ file.upload_date }}</td>
-                                                        <td>
-                                                            {% if file.in_trash %}
-                                                                <a href="{% url 'restore' file.id %}">restore</a>
-                                                            {% else %}
-                                                                <a href="{% url 'download' file.id %}">download</a>
-                                                            {% endif %}
-                                                        </td>
-                                                        <td><a href="{% url 'delete' file.id %}">delete</a></td>
-                                                    </tr>
-                                                {% endif %}
-                                                {% endfor %}
-                                            </table>
-                                </td>
+                                <td><a href="{% url 'delete_folder' folder.id %}">delete</a></td>
                             </tr>
+                        {% endfor %}
+
+                        {% for file in files %}
+                            {% if file.file_group == None or page_title != "Home" %}
+                                <tr>
+                                    <input type="hidden" value="{{ file.id }}">
+                                    <td>{{ file.filename }}<i class="fa-solid fa-file table-icon"></i></td>
+                                    <td>{{ file.size|sizify }}</td>
+                                        <td>{{ file.owner }}  {% if file.private %}<i class="fa-solid fa-lock table-icon"></i>{% endif %}</td>
+                                    <td>{{ file.upload_date }}</td>
+                                    <td>
+                                        {% if file.in_trash %}
+                                            <a href="{% url 'restore' file.id %}">restore</a>
+                                        {% else %}
+                                            <a href="{% url 'download' file.id %}">download</a>
+                                        {% endif %}
+                                    </td>
+                                    <td><a href="{% url 'delete' file.id %}">delete</a></td>
+                                </tr>
+                            {% endif %}
                         {% endfor %}
                         </tbody>
                     </table>
@@ -74,7 +69,8 @@
                         <form action="" style="padding-top: 5px;">
                             <label>move selected to:</label>
                             <select id="folder-selector">
-                                {% for folder in folders %}
+                                <option value="-1" selected>No folder</option>
+                                {% for folder in folders_dropdown %}
                                     <option value="{{ folder.id }}">{{ folder.groupname }}</option>
                                 {% endfor %}
                             </select>
@@ -105,46 +101,18 @@
 
 {% block page_scripts %}
 <script>
+    $(document).ready( function () {
+        var table = $('#files-table').DataTable({
 
-    /* Formatting function for row details - modify as you need */
-    function format (d) {
-        // `d` is the original data object for the row
-        return d["6"];
-    }
- 
-        $(document).ready( function () {
-            var table = $('#files-table').DataTable({
-                "columnDefs": [
-                    { "visible": false, "targets": 6 },
-                ],
-
-                "paging": false,
-                "ordering": true,
-                "info": false,
-                "searching": true,
-                "destroy": true,
-                "autoWidth": false,
-                "orderClasses": false
-            });
- 
-            // Add event listener for opening and closing details
-            $('#files-table tbody').on('click', 'td a.folder', function () {
-                var tr = $(this).closest('tr');
-                var row = table.row( tr );
-
-                if ( row.child.isShown() ) {
-                    // This row is already open - close it
-                    row.child.hide();
-                    tr.removeClass('shown');
-                }
-                else {
-                    // Open this row
-                    row.child( format(row.data()) ).show();
-                    tr.addClass('shown');
-                    tr.next('tr').addClass('folder-row');
-                }
-            });
-        }); 
+            "paging": false,
+            "ordering": true,
+            "info": false,
+            "searching": true,
+            "destroy": true,
+            "autoWidth": false,
+            "orderClasses": false
+        });
+    }); 
 
     // Allow selection of files by clicking on them
     $('#files-table tbody').on('click', 'tr', function () {
