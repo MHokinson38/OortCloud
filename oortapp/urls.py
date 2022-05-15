@@ -13,6 +13,7 @@ urlpatterns = [
     path("restore/<int:file_id>", views.restore_file, name="restore"),
     path("download/<int:file_id>", views.download_file, name="download"),
     path("download_folder/<int:folder_id>", views.download_folder, name="download_folder"),
+    path("open_folder/<int:folder_id>", views.open_folder, name="open_folder"),
 
     path('login', views.login_user, name='login'),
     path('sign_up', views.create_user, name='sign_up'),
